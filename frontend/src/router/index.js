@@ -1,7 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import LoginView from '../views/auth/LoginView.vue'
+
+import DashboardLayout from '../layouts/DashboardLayout.vue'
+
 import DashboardView from '../views/dashboard/DashboardView.vue'
+import PatientsView from '../views/patients/PatientsView.vue'
+import DoctorsView from '../views/doctors/DoctorsView.vue'
+import AppointmentsView from '../views/appointments/AppointmentsView.vue'
+import ReportsView from '../views/reports/ReportsView.vue'
 
 const routes = [
   {
@@ -11,15 +18,40 @@ const routes = [
 
   {
     path: '/login',
-    name: 'login',
     component: LoginView,
   },
 
   {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: DashboardView,
+    path: '/',
+    component: DashboardLayout,
     meta: { requiresAuth: true },
+
+    children: [
+      {
+        path: 'dashboard',
+        component: DashboardView,
+      },
+
+      {
+        path: 'patients',
+        component: PatientsView,
+      },
+
+      {
+        path: 'doctors',
+        component: DoctorsView,
+      },
+
+      {
+        path: 'appointments',
+        component: AppointmentsView,
+      },
+
+      {
+        path: 'reports',
+        component: ReportsView,
+      },
+    ],
   },
 ]
 
