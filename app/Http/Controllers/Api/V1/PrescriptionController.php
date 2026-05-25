@@ -7,6 +7,7 @@ use App\Http\Requests\StorePrescriptionRequest;
 use App\Http\Resources\PrescriptionResource;
 use App\Models\Prescription;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class PrescriptionController extends Controller
 {
@@ -18,40 +19,32 @@ class PrescriptionController extends Controller
             ->orderBy('date', 'desc')
             ->paginate(10);
 
-        return PrescriptionResource::collection($prescriptions);
+        return ApiResponse::success($prescriptions, 'Lista de recetas');
     }
 
     public function store(StorePrescriptionRequest $request)
     {
         $prescription = Prescription::create($request->validated());
 
-        return response()->json([
-            'message' => 'Receta creada exitosamente',
-            'prescription' => new PrescriptionResource($prescription->load(['patient.user', 'doctor.user'])),
-        ], 201);
+        return ApiResponse::success($prescription, 'Receta creada', 201);
     }
 
     public function show(Prescription $prescription)
     {
-        return new PrescriptionResource($prescription->load(['patient.user', 'doctor.user', 'medicalRecord']));
+        return ApiResponse::success($prescription, 'Receta encontrada');
     }
 
     public function update(StorePrescriptionRequest $request, Prescription $prescription)
     {
         $prescription->update($request->validated());
 
-        return response()->json([
-            'message' => 'Receta actualizada exitosamente',
-            'prescription' => new PrescriptionResource($prescription->load(['patient.user', 'doctor.user'])),
-        ]);
+        return ApiResponse::success($prescription, 'Receta actualizada');
     }
 
     public function destroy(Prescription $prescription)
     {
         $prescription->delete();
 
-        return response()->json([
-            'message' => 'Receta eliminada exitosamente',
-        ]);
+        return ApiResponse::success(null, 'Receta eliminada');
     }
 }

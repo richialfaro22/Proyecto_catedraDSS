@@ -7,6 +7,7 @@ use App\Http\Requests\StorePatientRequest;
 use App\Http\Resources\PatientResource;
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class PatientController extends Controller
 {
@@ -19,40 +20,32 @@ class PatientController extends Controller
             ))
             ->paginate(10);
 
-        return PatientResource::collection($patients);
+       return ApiResponse::success($patients, 'Lista de pacientes');
     }
 
     public function store(StorePatientRequest $request)
     {
         $patient = Patient::create($request->validated());
 
-        return response()->json([
-            'message' => 'Paciente creado exitosamente',
-            'patient' => new PatientResource($patient->load('user')),
-        ], 201);
+        return ApiResponse::success($patient, 'Paciente creado', 201);
     }
 
     public function show(Patient $patient)
     {
-        return new PatientResource($patient->load(['user', 'appointments', 'treatments', 'medicalRecords']));
+        return ApiResponse::success($patient, 'Paciente encontrado');
     }
 
     public function update(StorePatientRequest $request, Patient $patient)
     {
         $patient->update($request->validated());
 
-        return response()->json([
-            'message' => 'Paciente actualizado exitosamente',
-            'patient' => new PatientResource($patient->load('user')),
-        ]);
+       return ApiResponse::success($patient, 'Paciente actualizado');
     }
 
     public function destroy(Patient $patient)
     {
         $patient->delete();
 
-        return response()->json([
-            'message' => 'Paciente eliminado exitosamente',
-        ]);
+        return ApiResponse::success(null, 'Paciente eliminado');
     }
 }

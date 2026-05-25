@@ -50,6 +50,10 @@ Route::prefix('v1')->group(function () {
             Route::get('appointments-by-doctor', [ReportController::class, 'appointmentsByDoctor']);
         });
 
+        Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+            Route::apiResource('appointments', AppointmentController::class);
+        });
+
     }); // cierre auth:sanctum
 
 }); // cierre prefix v1

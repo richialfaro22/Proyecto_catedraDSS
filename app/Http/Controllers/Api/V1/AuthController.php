@@ -9,6 +9,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Helpers\ApiResponse;
 
 class AuthController extends Controller
 {
@@ -23,12 +24,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Usuario registrado exitosamente',
-            'user' => new UserResource($user),
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ], 201);
+        return ApiResponse::success($user, 'Usuario registrado', 201);
     }
 
     public function login(AuthLoginRequest $request)
@@ -36,34 +32,26 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Credenciales incorrectas',
-            ], 401);
+            return ApiResponse::error('Credenciales incorrectas', 401);
         }
 
         if (!$user->is_active) {
-            return response()->json([
-                'message' => 'Usuario inactivo',
-            ], 403);
+            return ApiResponse::error('Credenciales incorrectas', 401);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Inicio de sesión exitoso',
-            'user' => new UserResource($user),
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+        return ApiResponse::success([
+            'user' => $user,
+            'token' => $token
+        ], 'Login exitoso');
     }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Sesión cerrada exitosamente',
-        ]);
+        return ApiResponse::success(null, 'Sesión cerrada exitosamente');
     }
 
     public function me(Request $request)

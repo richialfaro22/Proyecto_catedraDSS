@@ -7,6 +7,7 @@ use App\Http\Requests\StoreMedicalRecordRequest;
 use App\Http\Resources\MedicalRecordResource;
 use App\Models\MedicalRecord;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class MedicalRecordController extends Controller
 {
@@ -18,40 +19,32 @@ class MedicalRecordController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return MedicalRecordResource::collection($records);
+        return ApiResponse::success($records, 'Historial clínico');
     }
 
     public function store(StoreMedicalRecordRequest $request)
     {
         $record = MedicalRecord::create($request->validated());
 
-        return response()->json([
-            'message' => 'Historial médico creado exitosamente',
-            'medical_record' => new MedicalRecordResource($record->load(['patient.user', 'doctor.user'])),
-        ], 201);
+       return ApiResponse::success($record, 'Registro creado', 201);
     }
 
     public function show(MedicalRecord $medicalRecord)
     {
-        return new MedicalRecordResource($medicalRecord->load(['patient.user', 'doctor.user', 'appointment']));
+        return ApiResponse::success($record, 'Registro encontrado');
     }
 
     public function update(StoreMedicalRecordRequest $request, MedicalRecord $medicalRecord)
     {
         $medicalRecord->update($request->validated());
 
-        return response()->json([
-            'message' => 'Historial médico actualizado exitosamente',
-            'medical_record' => new MedicalRecordResource($medicalRecord->load(['patient.user', 'doctor.user'])),
-        ]);
+        return ApiResponse::success($record, 'Registro actualizado');
     }
 
     public function destroy(MedicalRecord $medicalRecord)
     {
         $medicalRecord->delete();
 
-        return response()->json([
-            'message' => 'Historial médico eliminado exitosamente',
-        ]);
+        return ApiResponse::success(null, 'Registro eliminado');
     }
 }

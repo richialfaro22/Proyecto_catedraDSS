@@ -3,12 +3,17 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Appointment;
+use App\Policies\AppointmentPolicy;
+use Illuminate\Support\Facades\Gate;
+
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
      */
+
     public function register(): void
     {
         //
@@ -17,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot()
     {
-        //
+         Gate::policy(Appointment::class, AppointmentPolicy::class);
     }
 }

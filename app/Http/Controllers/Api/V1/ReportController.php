@@ -8,13 +8,14 @@ use App\Models\Patient;
 use App\Models\Doctor;
 use App\Models\MedicalRecord;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class ReportController extends Controller
 {
     // Reporte general del dashboard
     public function dashboard()
     {
-        return response()->json([
+        $data = [
             'total_patients' => Patient::count(),
             'total_doctors' => Doctor::count(),
             'total_appointments' => Appointment::count(),
@@ -23,7 +24,9 @@ class ReportController extends Controller
                 ->get(),
             'appointments_today' => Appointment::whereDate('appointment_date', today())->count(),
             'appointments_this_month' => Appointment::whereMonth('appointment_date', now()->month)->count(),
-        ]);
+        ];
+
+        return ApiResponse::success($data, 'Dashboard generado correctamente');
     }
 
     // Citas por período
@@ -36,11 +39,13 @@ class ReportController extends Controller
             ->whereBetween('appointment_date', [$from, $to])
             ->get();
 
-        return response()->json([
+        $data = [
             'period' => ['from' => $from, 'to' => $to],
             'total' => $appointments->count(),
             'appointments' => $appointments,
-        ]);
+        ];
+
+        return ApiResponse::success($data, 'Reporte de citas por período');
     }
 
     // Diagnósticos más frecuentes
@@ -53,9 +58,10 @@ class ReportController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json([
-            'frequent_diagnoses' => $diagnoses,
-        ]);
+        return ApiResponse::success(
+            $diagnoses,
+            'Diagnósticos más frecuentes'
+        );
     }
 
     // Citas por doctor
@@ -71,8 +77,9 @@ class ReportController extends Controller
                 'total_appointments' => $doctor->appointments_count,
             ]);
 
-        return response()->json([
-            'appointments_by_doctor' => $doctors,
-        ]);
+        return ApiResponse::success(
+            $doctors,
+            'Citas por doctor'
+        );
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\StoreDoctorRequest;
 use App\Http\Resources\DoctorResource;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class DoctorController extends Controller
 {
@@ -17,40 +18,32 @@ class DoctorController extends Controller
             ->when($request->is_active, fn($q) => $q->where('is_active', $request->is_active))
             ->paginate(10);
 
-        return DoctorResource::collection($doctors);
+       return ApiResponse::success($doctors, 'Lista de doctores');
     }
 
     public function store(StoreDoctorRequest $request)
     {
         $doctor = Doctor::create($request->validated());
 
-        return response()->json([
-            'message' => 'Doctor creado exitosamente',
-            'doctor' => new DoctorResource($doctor->load('user')),
-        ], 201);
+        return ApiResponse::success($doctor, 'Doctor creado exitosamente', 201);
     }
 
     public function show(Doctor $doctor)
     {
-        return new DoctorResource($doctor->load(['user', 'appointments']));
+        return ApiResponse::success($doctor->load(['user', 'appointments']), 'Doctor encontrado');
     }
 
     public function update(StoreDoctorRequest $request, Doctor $doctor)
     {
         $doctor->update($request->validated());
 
-        return response()->json([
-            'message' => 'Doctor actualizado exitosamente',
-            'doctor' => new DoctorResource($doctor->load('user')),
-        ]);
+        return ApiResponse::success($doctor->load('user'), 'Doctor actualizado exitosamente');
     }
 
     public function destroy(Doctor $doctor)
     {
         $doctor->delete();
 
-        return response()->json([
-            'message' => 'Doctor eliminado exitosamente',
-        ]);
+        return ApiResponse::success(null, 'Doctor eliminado');
     }
 }

@@ -5,14 +5,16 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Requests\UpdateAppointmentRequest;
-use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
+use App\Services\AppointmentService;
+use App\Helpers\ApiResponse;
 
 class AppointmentController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Appointment::class);
         $appointments = Appointment::with(['patient.user', 'doctor.user'])
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->doctor_id, fn($q) => $q->where('doctor_id', $request->doctor_id))
@@ -20,40 +22,36 @@ class AppointmentController extends Controller
             ->orderBy('appointment_date', 'desc')
             ->paginate(10);
 
-        return AppointmentResource::collection($appointments);
+        return ApiResponse::success($appointments, 'Lista de citas');
     }
 
-    public function store(StoreAppointmentRequest $request)
+    public function store(StoreAppointmentRequest $request, AppointmentService $service)
     {
-        $appointment = Appointment::create($request->validated());
+        $this->authorize('create', Appointment::class);
+        $appointment = $service->createAppointment($request->validated());
 
-        return response()->json([
-            'message' => 'Cita creada exitosamente',
-            'appointment' => new AppointmentResource($appointment->load(['patient.user', 'doctor.user'])),
-        ], 201);
+        return ApiResponse::success($appointment, 'Cita creada exitosamente', 201);
     }
 
     public function show(Appointment $appointment)
     {
-        return new AppointmentResource($appointment->load(['patient.user', 'doctor.user', 'treatment', 'medicalRecord']));
+        $this->authorize('view', $appointment);
+        return ApiResponse::success($appointment, 'Cita encontrada');
     }
 
-    public function update(UpdateAppointmentRequest $request, Appointment $appointment)
+    public function update(UpdateAppointmentRequest $request, Appointment $appointment, AppointmentService $service)
     {
-        $appointment->update($request->validated());
+        $this->authorize('update', $appointment);
+        $appointment = $service->updateAppointment($appointment, $request->validated());
 
-        return response()->json([
-            'message' => 'Cita actualizada exitosamente',
-            'appointment' => new AppointmentResource($appointment->load(['patient.user', 'doctor.user'])),
-        ]);
+        return ApiResponse::success($appointment, 'Cita actualizada');
     }
 
     public function destroy(Appointment $appointment)
     {
+        $this->authorize('delete', $appointment);
         $appointment->delete();
 
-        return response()->json([
-            'message' => 'Cita cancelada exitosamente',
-        ]);
+        return ApiResponse::success(null, 'Cita cancelada exitosamente', 200);
     }
 }
