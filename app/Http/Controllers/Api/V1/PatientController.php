@@ -32,15 +32,27 @@ class PatientController extends Controller
 
     public function show(Patient $patient)
     {
-        return ApiResponse::success($patient, 'Paciente encontrado');
+        return ApiResponse::success(
+            $patient->load('user'),
+            'Paciente encontrado'
+        );
     }
 
     public function update(StorePatientRequest $request, Patient $patient)
-    {
-        $patient->update($request->validated());
+{
+    $patient->update($request->validated());
 
-       return ApiResponse::success($patient, 'Paciente actualizado');
-    }
+    // actualizar usuario relacionado
+    $patient->user->update([
+        'name' => $request->name,
+        'email' => $request->email,
+    ]);
+
+    return ApiResponse::success(
+        $patient->load('user'),
+        'Paciente actualizado'
+    );
+}
 
     public function destroy(Patient $patient)
     {

@@ -37,7 +37,15 @@ class DoctorController extends Controller
     {
         $doctor->update($request->validated());
 
-        return ApiResponse::success($doctor->load('user'), 'Doctor actualizado exitosamente');
+        $doctor->user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return ApiResponse::success(
+            $doctor->load('user'),
+            'Doctor actualizado exitosamente'
+        );
     }
 
     public function destroy(Doctor $doctor)
