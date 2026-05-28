@@ -31,14 +31,24 @@ class MedicalRecordController extends Controller
 
     public function show(MedicalRecord $medicalRecord)
     {
-        return ApiResponse::success($record, 'Registro encontrado');
+        return ApiResponse::success(
+            $medicalRecord->load([
+                'patient.user',
+                'doctor.user',
+                'appointment'
+            ]),
+            'Registro encontrado'
+        );
     }
 
     public function update(StoreMedicalRecordRequest $request, MedicalRecord $medicalRecord)
     {
         $medicalRecord->update($request->validated());
 
-        return ApiResponse::success($record, 'Registro actualizado');
+        return ApiResponse::success(
+            $medicalRecord,
+            'Registro actualizado'
+        );
     }
 
     public function destroy(MedicalRecord $medicalRecord)

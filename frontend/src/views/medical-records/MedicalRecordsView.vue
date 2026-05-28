@@ -3,37 +3,36 @@
 import { ref, onMounted } from 'vue'
 
 import {
-  getAppointments,
-  createAppointment,
-  updateAppointment,
-  deleteAppointment
-} from '../../services/appointmentService'
+  getMedicalRecords,
+  createMedicalRecord,
+  updateMedicalRecord,
+  deleteMedicalRecord
+} from '../../services/medicalRecordService'
 
-const appointments = ref([])
+const records = ref([])
 
 const showModal = ref(false)
-const editingAppointment = ref(null)
 
 const form = ref({
+  id: null,
   patient_id: '',
   doctor_id: '',
-  appointment_date: '',
-  status: 'pending',
-  reason: '',
-  notes: '',
-  cost: '',
-  is_paid: false,
+  appointment_id: '',
+  diagnosis: '',
+  symptoms: '',
+  observations: '',
+  skin_condition: '',
 })
 
-const loadAppointments = async () => {
+const loadRecords = async () => {
 
   try {
 
-    const response = await getAppointments()
+    const response = await getMedicalRecords()
 
     console.log(response)
 
-    appointments.value = response.data.data
+    records.value = response.data.data
 
   } catch (error) {
 
@@ -43,53 +42,60 @@ const loadAppointments = async () => {
 
 }
 
-const editAppointment = (appointment) => {
-
-  editingAppointment.value = appointment
+const openCreateModal = () => {
 
   form.value = {
-    patient_id: appointment.patient_id,
-    doctor_id: appointment.doctor_id,
-
-    appointment_date: appointment.appointment_date
-      ? appointment.appointment_date.slice(0,16)
-      : '',
-
-    status: appointment.status,
-    reason: appointment.reason,
-    notes: appointment.notes,
-    cost: appointment.cost,
-    is_paid: appointment.is_paid,
+    id: null,
+    patient_id: '',
+    doctor_id: '',
+    appointment_id: '',
+    diagnosis: '',
+    symptoms: '',
+    observations: '',
+    skin_condition: '',
   }
 
   showModal.value = true
 
 }
 
-const saveAppointment = async () => {
+const openEditModal = (record) => {
+
+  form.value = {
+    id: record.id,
+    patient_id: record.patient_id,
+    doctor_id: record.doctor_id,
+    appointment_id: record.appointment_id,
+    diagnosis: record.diagnosis,
+    symptoms: record.symptoms,
+    observations: record.observations,
+    skin_condition: record.skin_condition,
+  }
+
+  showModal.value = true
+
+}
+
+const saveRecord = async () => {
 
   try {
 
-    if (editingAppointment.value) {
+    if (form.value.id) {
 
-      await updateAppointment(
-        editingAppointment.value.id,
+      await updateMedicalRecord(
+        form.value.id,
         form.value
       )
 
     } else {
 
-      await createAppointment(form.value)
+      await createMedicalRecord(form.value)
 
     }
 
     showModal.value = false
 
-    resetForm()
-
-    editingAppointment.value = null
-
-    await loadAppointments()
+    await loadRecords()
 
   } catch (error) {
 
@@ -101,34 +107,19 @@ const saveAppointment = async () => {
 
 }
 
-const resetForm = () => {
+const removeRecord = async (id) => {
 
-  form.value = {
-    patient_id: '',
-    doctor_id: '',
-    appointment_date: '',
-    status: 'pending',
-    reason: '',
-    notes: '',
-    cost: '',
-    is_paid: false,
-  }
+  const confirmDelete = confirm(
+    '¿Eliminar historial clínico?'
+  )
 
-  editingAppointment.value = null
-
-}
-
-const deleteAppointmentAction = async (id) => {
-
-  const confirmed = confirm('¿Eliminar esta cita?')
-
-  if (!confirmed) return
+  if (!confirmDelete) return
 
   try {
 
-    await deleteAppointment(id)
+    await deleteMedicalRecord(id)
 
-    await loadAppointments()
+    loadRecords()
 
   } catch (error) {
 
@@ -140,7 +131,7 @@ const deleteAppointmentAction = async (id) => {
 
 onMounted(() => {
 
-  loadAppointments()
+  loadRecords()
 
 })
 
@@ -154,16 +145,16 @@ onMounted(() => {
       <div class="header-text">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="header-icon">
-            <i class="ti ti-calendar-event" aria-hidden="true"></i>
+            <i class="ti ti-clipboard-text" aria-hidden="true"></i>
           </div>
-          <h1>Citas</h1>
+          <h1>Historial Clínico</h1>
         </div>
-        <p>Gestión de citas dermatológicas</p>
+        <p>Gestión de expedientes médicos</p>
       </div>
 
-      <button @click="showModal = true" class="btn-nuevo">
+      <button @click="openCreateModal" class="btn-nuevo">
         <i class="ti ti-plus" aria-hidden="true"></i>
-        {{ editingAppointment ? 'Editar Cita' : 'Nueva Cita' }}
+        Nuevo Registro
       </button>
     </div>
 
@@ -175,42 +166,29 @@ onMounted(() => {
             <th>ID</th>
             <th>Paciente</th>
             <th>Doctor</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-            <th>Motivo</th>
-            <th>Costo</th>
+            <th>Diagnóstico</th>
+            <th>Condición</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="appointment in appointments" :key="appointment.id">
-            <td class="id-cell">{{ appointment.id }}</td>
+          <tr v-for="record in records" :key="record.id">
+            <td class="id-cell">{{ record.id }}</td>
             <td>
-              <span class="avatar">{{ (appointment.patient?.user?.name || 'SP').slice(0,2).toUpperCase() }}</span>
-              {{ appointment.patient?.user?.name || 'Sin paciente' }}
+              <span class="avatar">{{ (record.patient?.user?.name || 'SP').slice(0,2).toUpperCase() }}</span>
+              {{ record.patient?.user?.name }}
             </td>
-            <td class="muted-cell">{{ appointment.doctor?.user?.name || 'Sin doctor' }}</td>
-            <td class="muted-cell">{{ appointment.appointment_date }}</td>
+            <td class="muted-cell">{{ record.doctor?.user?.name }}</td>
+            <td class="muted-cell">{{ record.diagnosis }}</td>
             <td>
-              <span
-                class="badge-status"
-                :class="{
-                  'badge-pending':   appointment.status === 'pending',
-                  'badge-confirmed': appointment.status === 'confirmed',
-                  'badge-cancelled': appointment.status === 'cancelled'
-                }"
-              >
-                {{ appointment.status }}
-              </span>
+              <span class="badge-condition">{{ record.skin_condition }}</span>
             </td>
-            <td class="muted-cell">{{ appointment.reason }}</td>
-            <td class="cost-cell">${{ appointment.cost }}</td>
             <td>
               <div class="actions-cell">
-                <button @click="editAppointment(appointment)" class="btn-editar">
+                <button @click="openEditModal(record)" class="btn-editar">
                   <i class="ti ti-edit" aria-hidden="true"></i> Editar
                 </button>
-                <button @click="deleteAppointmentAction(appointment.id)" class="btn-eliminar">
+                <button @click="removeRecord(record.id)" class="btn-eliminar">
                   <i class="ti ti-trash" aria-hidden="true"></i> Eliminar
                 </button>
               </div>
@@ -224,64 +202,46 @@ onMounted(() => {
     <div v-if="showModal" class="modal-backdrop">
       <div class="modal-box">
         <h2>
-          <i class="ti ti-calendar-plus" aria-hidden="true"></i>
-          Nueva Cita
+          <i class="ti ti-file-plus" aria-hidden="true"></i>
+          {{ form.id ? 'Editar Registro' : 'Nuevo Registro' }}
         </h2>
 
         <div class="modal-grid">
           <input
             v-model.number="form.patient_id"
-            type="number" min="1"
+            type="number"
             placeholder="ID Paciente"
             class="modal-input"
           />
           <input
             v-model.number="form.doctor_id"
-            type="number" min="1"
+            type="number"
             placeholder="ID Doctor"
             class="modal-input"
           />
           <input
-            v-model="form.appointment_date"
-            type="datetime-local"
+            v-model.number="form.appointment_id"
+            type="number"
+            placeholder="ID Cita"
             class="modal-input"
           />
-          <select v-model="form.status" class="modal-input">
-            <option value="pending">Pendiente</option>
-            <option value="confirmed">Confirmada</option>
-            <option value="cancelled">Cancelada</option>
-          </select>
           <input
-            v-model="form.cost"
-            type="number" min="0" step="0.01"
-            placeholder="Costo"
+            v-model="form.skin_condition"
+            type="text"
+            placeholder="Condición Cutánea"
             class="modal-input"
           />
-          <select v-model="form.is_paid" class="modal-input">
-            <option :value="true">Pagada</option>
-            <option :value="false">Pendiente Pago</option>
-          </select>
         </div>
 
-        <textarea
-          v-model="form.reason"
-          placeholder="Motivo de consulta"
-          rows="3"
-          class="modal-textarea"
-        ></textarea>
-
-        <textarea
-          v-model="form.notes"
-          placeholder="Notas adicionales"
-          rows="3"
-          class="modal-textarea"
-        ></textarea>
+        <textarea v-model="form.diagnosis"    rows="3" placeholder="Diagnóstico"   class="modal-textarea"></textarea>
+        <textarea v-model="form.symptoms"     rows="3" placeholder="Síntomas"      class="modal-textarea"></textarea>
+        <textarea v-model="form.observations" rows="3" placeholder="Observaciones" class="modal-textarea"></textarea>
 
         <div class="modal-footer">
           <button @click="showModal = false" class="btn-cancel">Cancelar</button>
-          <button @click="saveAppointment" class="btn-save">
+          <button @click="saveRecord" class="btn-save">
             <i class="ti ti-check" aria-hidden="true"></i>
-            {{ editingAppointment ? 'Actualizar' : 'Guardar' }}
+            Guardar
           </button>
         </div>
       </div>
@@ -361,7 +321,6 @@ tbody td { padding: 13px 16px; font-size: 13.5px; vertical-align: middle; }
 
 .id-cell    { color: #5A90AA; font-size: 12px; font-weight: 500; }
 .muted-cell { color: #777; font-size: 13px; }
-.cost-cell  { color: #1A5070; font-weight: 500; font-size: 13.5px; }
 
 .avatar {
   display: inline-flex; align-items: center; justify-content: center;
@@ -374,18 +333,15 @@ tbody td { padding: 13px 16px; font-size: 13.5px; vertical-align: middle; }
   vertical-align: middle;
 }
 
-/* Badges estado */
-.badge-status {
+.badge-condition {
   display: inline-block;
-  padding: 4px 12px;
+  background: #E8F4FB;
+  color: #1E5A80;
+  padding: 3px 10px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  text-transform: capitalize;
 }
-.badge-pending   { background: #FEF9EC; color: #9A6300; border: 0.5px solid #F5D49A; }
-.badge-confirmed { background: #E8F6EF; color: #2D7A54; border: 0.5px solid #A8DFC0; }
-.badge-cancelled { background: #FDF0F2; color: #A0303F; border: 0.5px solid #F0C0C8; }
 
 /* Acciones */
 .actions-cell { display: flex; gap: 8px; align-items: center; }
